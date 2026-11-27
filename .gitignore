@@ -2,5 +2,7 @@ node_modules/
 frontend/dist/
 frontend/.env
 backend/.env
+backend/uploads/*
+!backend/uploads/.gitkeep
 .DS_Store
 Thumbs.db
