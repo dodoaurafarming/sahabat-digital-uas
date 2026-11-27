@@ -4,13 +4,33 @@ declare(strict_types=1);
 
 function applyCorsHeaders(): void
 {
-    $origin = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173';
+    $configured = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173';
+    $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', $configured))));
+
+    $defaultDevOrigins = [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5174',
+    ];
+    foreach ($defaultDevOrigins as $devOrigin) {
+        if (!in_array($devOrigin, $allowedOrigins, true)) {
+            $allowedOrigins[] = $devOrigin;
+        }
+    }
+
+    $requestOrigin = trim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
+    $originToSend = in_array($requestOrigin, $allowedOrigins, true)
+        ? $requestOrigin
+        : ($allowedOrigins[0] ?? 'http://localhost:5173');
 
     header('Content-Type: application/json; charset=utf-8');
-    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+    header('Access-Control-Allow-Origin: ' . $originToSend);
     header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
     header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Max-Age: 86400');
 
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
         http_response_code(204);
